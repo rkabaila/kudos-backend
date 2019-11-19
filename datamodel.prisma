@@ -1,13 +1,11 @@
 type User {
   id: ID! @id
-  email: String @unique
   name: String!
-  posts: [Post!]
+  kudos: [Kudos!] @relation(name: "WrittenKudos")
 }
 
-type Post {
+type Kudos {
   id: ID! @id
   title: String!
-  published: Boolean! @default(value: false)
-  author: User @relation(link: INLINE)
+  author: User @relation(name: "WrittenKudos")
 }

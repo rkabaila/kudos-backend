@@ -3,36 +3,30 @@ const { GraphQLServer } = require("graphql-yoga");
 
 const resolvers = {
   Query: {
-    publishedPosts(root, args, context) {
-      return context.prisma.posts({ where: { published: true } });
+    kudos(root, args, context) {
+      return context.prisma.kudos({ id: args.kudosId });
     },
-    post(root, args, context) {
-      return context.prisma.post({ id: args.postId });
+    kudoses(root, args, context) {
+      return context.prisma.kudoses();
     },
-    postsByUser(root, args, context) {
+    kudosByUser(root, args, context) {
       return context.prisma
         .user({
           id: args.userId
         })
-        .posts();
+        .kudos();
     },
     users(root, args, context) {
       return context.prisma.users();
     }
   },
   Mutation: {
-    createDraft(root, args, context) {
-      return context.prisma.createPost({
+    createKudos(root, args, context) {
+      return context.prisma.createKudos({
         title: args.title,
         author: {
           connect: { id: args.userId }
         }
-      });
-    },
-    publish(root, args, context) {
-      return context.prisma.updatePost({
-        where: { id: args.postId },
-        data: { published: true }
       });
     },
     createUser(root, args, context) {
@@ -40,18 +34,18 @@ const resolvers = {
     }
   },
   User: {
-    posts(root, args, context) {
+    kudos(root, args, context) {
       return context.prisma
         .user({
           id: root.id
         })
-        .posts();
+        .kudos();
     }
   },
-  Post: {
+  Kudos: {
     author(root, args, context) {
       return context.prisma
-        .post({
+        .kudos({
           id: root.id
         })
         .author();
