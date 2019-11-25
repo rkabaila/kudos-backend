@@ -13,11 +13,13 @@ type Mutation {
 type User {
   id: ID!
   name: String!
-  kudos: [Kudos!]!
+  writtenKudos: [Kudos]
+  ownKudos: [Kudos]
 }
 
 type Kudos {
   id: ID!
   title: String!
   author: User
+  recipient: User
 }

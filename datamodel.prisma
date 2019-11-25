@@ -1,11 +1,13 @@
 type User {
   id: ID! @id
   name: String!
-  kudos: [Kudos!] @relation(name: "WrittenKudos")
+  writtenKudos: [Kudos] @relation(name: "WrittenKudos")
+  ownKudos: [Kudos] @relation(name: "OwnKudos")
 }
 
 type Kudos {
   id: ID! @id
   title: String!
   author: User @relation(name: "WrittenKudos")
+  recipient: User @relation(name: "OwnKudos")
 }

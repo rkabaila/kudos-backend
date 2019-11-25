@@ -14,7 +14,7 @@ const resolvers = {
         .user({
           id: args.userId
         })
-        .kudos();
+        .ownKudos();
     },
     users(root, args, context) {
       return context.prisma.users();
@@ -34,12 +34,19 @@ const resolvers = {
     }
   },
   User: {
-    kudos(root, args, context) {
+    ownKudos(root, args, context) {
       return context.prisma
         .user({
           id: root.id
         })
-        .kudos();
+        .ownKudos();
+    },
+    writtenKudos(root, args, context) {
+      return context.prisma
+        .user({
+          id: root.id
+        })
+        .writtenKudos();
     }
   },
   Kudos: {
@@ -49,6 +56,13 @@ const resolvers = {
           id: root.id
         })
         .author();
+    },
+    recipient(root, args, context) {
+      return context.prisma
+        .kudos({
+          id: root.id
+        })
+        .recipient();
     }
   }
 };
