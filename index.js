@@ -9,28 +9,45 @@ const resolvers = {
     kudoses(root, args, context) {
       return context.prisma.kudoses();
     },
-    kudosByUser(root, args, context) {
+    ownKudosByUser(root, args, context) {
       return context.prisma
         .user({
           id: args.userId
         })
         .ownKudos();
     },
+    writtenKudosByUser(root, args, context) {
+      return context.prisma
+        .user({
+          id: args.userId
+        })
+        .writtenKudos();
+    },
     users(root, args, context) {
       return context.prisma.users();
     }
   },
   Mutation: {
-    createKudos(root, args, context) {
+    addKudos(root, args, context) {
+      console.log(args);
       return context.prisma.createKudos({
-        title: args.title,
-        author: {
-          connect: { id: args.userId }
-        }
+        title: args.title
+        // author: {
+        //   connect: { id: args.authorId }
+        // },
+        // recipient: {
+        //   connect: { id: args.recipientId }
+        // }
       });
     },
-    createUser(root, args, context) {
+    deleteKudos(root, args, context) {
+      return context.prisma.deleteKudos({ id: args.id });
+    },
+    addUser(root, args, context) {
       return context.prisma.createUser({ name: args.name });
+    },
+    deleteUser(root, args, context) {
+      return context.prisma.deleteUser({ id: args.id });
     }
   },
   User: {
