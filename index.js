@@ -29,15 +29,14 @@ const resolvers = {
   },
   Mutation: {
     addKudos(root, args, context) {
-      console.log(args);
       return context.prisma.createKudos({
-        title: args.title
-        // author: {
-        //   connect: { id: args.authorId }
-        // },
-        // recipient: {
-        //   connect: { id: args.recipientId }
-        // }
+        title: args.title,
+        author: {
+          connect: { id: args.authorId }
+        },
+        recipient: {
+          connect: { id: args.recipientId }
+        }
       });
     },
     deleteKudos(root, args, context) {
