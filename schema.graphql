@@ -4,6 +4,7 @@ type Query {
   ownKudosByUser(userId: ID!): [Kudos]
   writtenKudosByUser(userId: ID!): [Kudos]
   users: [User]
+  getUserById(id: ID!): User
 }
 
 type Mutation {

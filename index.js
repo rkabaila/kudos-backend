@@ -23,6 +23,9 @@ const resolvers = {
         })
         .writtenKudos();
     },
+    getUserById(root, args, context) {
+      return context.prisma.user({ id: args.id });
+    },
     users(root, args, context) {
       return context.prisma.users();
     }
@@ -90,4 +93,5 @@ const server = new GraphQLServer({
     prisma
   }
 });
+
 server.start(() => console.log("Server is running on http://localhost:4000"));
