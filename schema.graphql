@@ -1,10 +1,10 @@
 type Query {
-  kudos(kudosId: ID!): Kudos
+  kudosById(kudosId: ID!): Kudos
   kudoses: [Kudos]
-  ownKudosByUser(userId: ID!): [Kudos]
-  writtenKudosByUser(userId: ID!): [Kudos]
+  userOwnKudoses(userId: ID!): [Kudos]
+  userWrittenKudoses(userId: ID!): [Kudos]
   users: [User]
-  getUserById(id: ID!): User
+  userById(id: ID!): User
 }
 
 type Mutation {
@@ -17,8 +17,8 @@ type Mutation {
 type User {
   id: ID!
   name: String!
-  writtenKudos: [Kudos]
-  ownKudos: [Kudos]
+  writtenKudoses: [Kudos]
+  ownKudoses: [Kudos]
 }
 
 type Kudos {

@@ -3,27 +3,27 @@ const { GraphQLServer } = require("graphql-yoga");
 
 const resolvers = {
   Query: {
-    kudos(root, args, context) {
+    kudosById(root, args, context) {
       return context.prisma.kudos({ id: args.kudosId });
     },
     kudoses(root, args, context) {
       return context.prisma.kudoses();
     },
-    ownKudosByUser(root, args, context) {
+    userOwnKudoses(root, args, context) {
       return context.prisma
         .user({
           id: args.userId
         })
-        .ownKudos();
+        .ownKudoses();
     },
-    writtenKudosByUser(root, args, context) {
+    userWrittenKudoses(root, args, context) {
       return context.prisma
         .user({
           id: args.userId
         })
-        .writtenKudos();
+        .writtenKudoses();
     },
-    getUserById(root, args, context) {
+    userById(root, args, context) {
       return context.prisma.user({ id: args.id });
     },
     users(root, args, context) {
@@ -53,19 +53,19 @@ const resolvers = {
     }
   },
   User: {
-    ownKudos(root, args, context) {
+    ownKudoses(root, args, context) {
       return context.prisma
         .user({
           id: root.id
         })
-        .ownKudos();
+        .ownKudoses();
     },
-    writtenKudos(root, args, context) {
+    writtenKudoses(root, args, context) {
       return context.prisma
         .user({
           id: root.id
         })
-        .writtenKudos();
+        .writtenKudoses();
     }
   },
   Kudos: {
