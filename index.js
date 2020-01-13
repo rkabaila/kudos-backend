@@ -1,5 +1,6 @@
 const { prisma } = require("./generated/prisma-client");
 const { GraphQLServer } = require("graphql-yoga");
+const bodyParser = require("body-parser");
 
 const resolvers = {
   Query: {
@@ -93,5 +94,34 @@ const server = new GraphQLServer({
     prisma
   }
 });
+server.express
+  .use(bodyParser.urlencoded({ extended: true }))
+  .post("/slack", async (req, res) => {
+    const slackRequest = req.body;
+    const commandText = slackRequest.text.split(" ");
+    const authorName = commandText[0];
+    const recipientName = commandText[1];
+    const kudosText = commandText.splice(2, commandText.length).join(" ");
+
+    const users = await prisma.users();
+    const author = users.find(
+      user => user.name.toLowerCase() === authorName.toLowerCase()
+    );
+    const recipient = users.find(
+      user => user.name.toLowerCase() === recipientName.toLowerCase()
+    );
+
+    const addedkudos = await prisma.createKudos({
+      title: kudosText,
+      author: {
+        connect: { id: author.id }
+      },
+      recipient: {
+        connect: { id: recipient.id }
+      }
+    });
+
+    res.status(200).send(`Kudos "${addedkudos.title}" is sent.`);
+  });
 
 server.start(() => console.log("Server is running on http://localhost:4000"));
