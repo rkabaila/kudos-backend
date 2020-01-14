@@ -111,7 +111,7 @@ server.express
       user => user.name.toLowerCase() === recipientName.toLowerCase()
     );
 
-    const addedkudos = await prisma.createKudos({
+    const addedKudos = await prisma.createKudos({
       title: kudosText,
       author: {
         connect: { id: author.id }
@@ -121,7 +121,9 @@ server.express
       }
     });
 
-    res.status(200).send(`Kudos "${addedkudos.title}" is sent.`);
+    res
+      .status(200)
+      .send(`Kudos "${addedKudos.title}" is sent to ${recipientName}.`);
   });
 
 server.start(() => console.log("Server is running on http://localhost:4000"));
