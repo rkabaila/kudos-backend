@@ -1,6 +1,9 @@
 const { prisma } = require("./generated/prisma-client");
 const { GraphQLServer } = require("graphql-yoga");
 const bodyParser = require("body-parser");
+const apiUrl = "https://slack.com/api";
+const axios = require("axios");
+const qs = require("querystring");
 
 const resolvers = {
   Query: {
@@ -96,34 +99,100 @@ const server = new GraphQLServer({
 });
 server.express
   .use(bodyParser.urlencoded({ extended: true }))
-  .post("/slack", async (req, res) => {
+  .post("/command", async (req, res) => {
     const slackRequest = req.body;
-    const commandText = slackRequest.text.split(" ");
-    const authorName = commandText[0];
-    const recipientName = commandText[1];
-    const kudosText = commandText.splice(2, commandText.length).join(" ");
+    console.group(slackRequest);
 
-    const users = await prisma.users();
-    const author = users.find(
-      user => user.name.toLowerCase() === authorName.toLowerCase()
-    );
-    const recipient = users.find(
-      user => user.name.toLowerCase() === recipientName.toLowerCase()
-    );
+    const view = {
+      token:
+        "xoxp-864511312258-865826180771-913661876304-39ef75a80036654157d74cea21a81915",
+      trigger_id: slackRequest.trigger_id,
+      view: JSON.stringify({
+        type: "modal",
+        title: {
+          type: "plain_text",
+          text: "Kudos info"
+        },
+        callback_id: "submit-kudos",
+        submit: {
+          type: "plain_text",
+          text: "Submit"
+        },
+        blocks: [
+          {
+            block_id: "description_block",
+            type: "input",
+            label: {
+              type: "plain_text",
+              text: "Description"
+            },
+            element: {
+              action_id: "description",
+              type: "plain_text_input",
+              multiline: true
+            },
+            optional: true
+          },
+          {
+            block_id: "recipient_block",
+            type: "input",
+            label: {
+              type: "plain_text",
+              text: "Users select"
+            },
+            element: {
+              action_id: "recipient",
+              type: "users_select",
+              placeholder: {
+                type: "plain_text",
+                text: "Select user"
+              }
+            },
+            optional: true
+          }
+        ]
+      })
+    };
 
-    const addedKudos = await prisma.createKudos({
-      title: kudosText,
-      author: {
-        connect: { id: author.id }
-      },
-      recipient: {
-        connect: { id: recipient.id }
-      }
-    });
+    axios
+      .post(`${apiUrl}/views.open`, qs.stringify(view))
+      .then(result => {
+        console.log("views.open:", result.data);
+        res.send("");
+      })
+      .catch(err => {
+        console.log("views.open call failed:", err);
+        res.sendStatus(500);
+      });
+  })
+  .post("/interaction", async (req, res) => {
+    const slackRequest = req.body;
+    console.group(slackRequest);
 
-    res
-      .status(200)
-      .send(`Kudos "${addedKudos.title}" is sent to ${recipientName}.`);
+    // const commandText = slackRequest.text.split(" ");
+
+    // const recipientName = commandText[1];
+    // const kudosText = commandText.splice(2, commandText.length).join(" ");
+
+    // const users = await prisma.users();
+    // const author = users.find(
+    //   user => user.name.toLowerCase() === username.toLowerCase()
+    // );
+    // const recipient = users.find(
+    //   user => user.name.toLowerCase() === recipientName.toLowerCase()
+    // );
+
+    // const addedKudos = await prisma.createKudos({
+    //   title: kudosText,
+    //   author: {
+    //     connect: { id: author.id }
+    //   },
+    //   recipient: {
+    //     connect: { id: recipient.id }
+    //   }
+    // });
+
+    res.status(200).send(``);
   });
 
 server.start(() => console.log("Server is running on http://localhost:4000"));
