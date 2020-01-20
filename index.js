@@ -100,10 +100,12 @@ const server = new GraphQLServer({
 server.express
   .use(bodyParser.urlencoded({ extended: true }))
   .post("/command", async (req, res) => {
+    //TODO need to check request token
     const slackRequest = req.body;
     console.group(slackRequest);
 
     const view = {
+      //TODO token is disabled need to move to env
       token:
         "xoxp-864511312258-865826180771-913661876304-39ef75a80036654157d74cea21a81915",
       trigger_id: slackRequest.trigger_id,
