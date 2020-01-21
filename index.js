@@ -117,29 +117,29 @@ server.express
         callback_id: "submit-kudos",
         submit: {
           type: "plain_text",
-          text: "Submit"
+          text: "Send kudos"
         },
         blocks: [
           {
-            block_id: "description_block",
+            block_id: "kudos_text_block",
             type: "input",
             label: {
               type: "plain_text",
-              text: "Description"
+              text: "Kudos text:"
             },
             element: {
-              action_id: "description",
+              action_id: "kudos_text",
               type: "plain_text_input",
+              initial_value: slackRequest.text,
               multiline: true
-            },
-            optional: true
+            }
           },
           {
             block_id: "recipient_block",
             type: "input",
             label: {
               type: "plain_text",
-              text: "Users select"
+              text: "Send to user:"
             },
             element: {
               action_id: "recipient",
@@ -148,8 +148,7 @@ server.express
                 type: "plain_text",
                 text: "Select user"
               }
-            },
-            optional: true
+            }
           }
         ]
       })
@@ -158,42 +157,38 @@ server.express
     axios
       .post(`${apiUrl}/views.open`, qs.stringify(view))
       .then(result => {
-        console.log("views.open:", result.data);
+        // console.log("views.open:", result.data);
         res.send("");
       })
       .catch(err => {
-        console.log("views.open call failed:", err);
+        // console.log("views.open call failed:", err);
         res.sendStatus(500);
       });
   })
   .post("/interaction", async (req, res) => {
-    const slackRequest = req.body;
-    console.group(slackRequest);
+    const slackRequest = JSON.parse(req.body.payload);
 
-    // const commandText = slackRequest.text.split(" ");
+    const authorSlackId = user.id;
+    const recipientSlackId =
+      slackRequest.view.state.values.recipient_block.recipient.selected_user;
+    const kudosText =
+      slackRequest.view.state.values.kudos_text_block.kudos_text.value;
 
-    // const recipientName = commandText[1];
-    // const kudosText = commandText.splice(2, commandText.length).join(" ");
+    const users = await prisma.users();
+    const author = users.find(user => user.slackId === authorSlackId);
+    const recipient = users.find(user => user.slackId === recipientSlackId);
 
-    // const users = await prisma.users();
-    // const author = users.find(
-    //   user => user.name.toLowerCase() === username.toLowerCase()
-    // );
-    // const recipient = users.find(
-    //   user => user.name.toLowerCase() === recipientName.toLowerCase()
-    // );
+    const addedKudos = await prisma.createKudos({
+      title: kudosText,
+      author: {
+        connect: { id: author.id }
+      },
+      recipient: {
+        connect: { id: recipient.id }
+      }
+    });
 
-    // const addedKudos = await prisma.createKudos({
-    //   title: kudosText,
-    //   author: {
-    //     connect: { id: author.id }
-    //   },
-    //   recipient: {
-    //     connect: { id: recipient.id }
-    //   }
-    // });
-
-    res.status(200).send(``);
+    res.status(200).send(`${addedKudos.title} is sent to ${recipient.name}`);
   });
 
 server.start(() => console.log("Server is running on http://localhost:4000"));
