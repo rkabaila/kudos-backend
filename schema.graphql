@@ -8,14 +8,15 @@ type Query {
 }
 
 type Mutation {
-  addUser(name: String!): User
+  addUser(name: String!, slackId: String!): User
   deleteUser(id: ID!): User
-  addKudos(title: String!, authorId: ID, recipientId: ID): Kudos
+  addKudos(text: String!, authorId: ID, recipientId: ID): Kudos
   deleteKudos(id: ID!): Kudos
 }
 
 type User {
   id: ID!
+  slackId: String!
   name: String!
   writtenKudoses: [Kudos]
   ownKudoses: [Kudos]
@@ -23,7 +24,7 @@ type User {
 
 type Kudos {
   id: ID!
-  title: String!
+  text: String!
   author: User
   recipient: User
 }

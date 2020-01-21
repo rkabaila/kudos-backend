@@ -4,8 +4,10 @@ const bodyParser = require("body-parser");
 const apiUrl = "https://slack.com/api";
 const axios = require("axios");
 const qs = require("querystring");
+const _ = require("lodash");
 require("dotenv").config();
-const slackAuth = process.env.SLACK_AUTH;
+const authToken = process.env.AUTH_TOKEN;
+const webhookUrl = process.env.WEBHOOK_URL;
 
 const resolvers = {
   Query: {
@@ -39,7 +41,7 @@ const resolvers = {
   Mutation: {
     addKudos(root, args, context) {
       return context.prisma.createKudos({
-        title: args.title,
+        text: args.text,
         author: {
           connect: { id: args.authorId }
         },
@@ -52,7 +54,10 @@ const resolvers = {
       return context.prisma.deleteKudos({ id: args.id });
     },
     addUser(root, args, context) {
-      return context.prisma.createUser({ name: args.name });
+      return context.prisma.createUser({
+        slackId: args.slackId,
+        name: args.name
+      });
     },
     deleteUser(root, args, context) {
       return context.prisma.deleteUser({ id: args.id });
@@ -99,87 +104,95 @@ const server = new GraphQLServer({
     prisma
   }
 });
-server.express
-  .use(bodyParser.urlencoded({ extended: true }))
-  .post("/command", async (req, res) => {
-    //TODO need to check request token
-    const slackRequest = req.body;
+const expressServer = server.express.use(
+  bodyParser.urlencoded({ extended: true })
+);
 
-    const view = {
-      token: slackAuth,
-      trigger_id: slackRequest.trigger_id,
-      view: JSON.stringify({
-        type: "modal",
-        title: {
-          type: "plain_text",
-          text: "Kudos info"
-        },
-        callback_id: "submit-kudos",
-        submit: {
-          type: "plain_text",
-          text: "Send kudos"
-        },
-        blocks: [
-          {
-            block_id: "kudos_text_block",
-            type: "input",
-            label: {
-              type: "plain_text",
-              text: "Kudos text:"
-            },
-            element: {
-              action_id: "kudos_text",
-              type: "plain_text_input",
-              initial_value: slackRequest.text,
-              multiline: true
-            }
+expressServer.post("/command", async (req, res) => {
+  //TODO need to check request token
+  const slackRequest = req.body;
+
+  const view = {
+    token: authToken,
+    trigger_id: slackRequest.trigger_id,
+    view: JSON.stringify({
+      type: "modal",
+      title: {
+        type: "plain_text",
+        text: "Kudos info"
+      },
+      callback_id: "submit-kudos",
+      submit: {
+        type: "plain_text",
+        text: "Send kudos"
+      },
+      blocks: [
+        {
+          block_id: "kudos_text_block",
+          type: "input",
+          label: {
+            type: "plain_text",
+            text: "Kudos text:"
           },
-          {
-            block_id: "recipient_block",
-            type: "input",
-            label: {
+          element: {
+            action_id: "kudos_text",
+            type: "plain_text_input",
+            initial_value: slackRequest.text,
+            multiline: true
+          }
+        },
+        {
+          block_id: "recipient_block",
+          type: "input",
+          label: {
+            type: "plain_text",
+            text: "Send to user:"
+          },
+          element: {
+            action_id: "recipient",
+            type: "users_select",
+            placeholder: {
               type: "plain_text",
-              text: "Send to user:"
-            },
-            element: {
-              action_id: "recipient",
-              type: "users_select",
-              placeholder: {
-                type: "plain_text",
-                text: "Select user"
-              }
+              text: "Select user"
             }
           }
-        ]
-      })
-    };
+        }
+      ]
+    })
+  };
 
-    axios
-      .post(`${apiUrl}/views.open`, qs.stringify(view))
-      .then(result => {
-        // console.log("views.open:", result.data);
-        res.send("");
-      })
-      .catch(err => {
-        // console.log("views.open call failed:", err);
-        res.sendStatus(500);
-      });
-  })
-  .post("/interaction", async (req, res) => {
-    const slackRequest = JSON.parse(req.body.payload);
+  axios
+    .post(`${apiUrl}/views.open`, qs.stringify(view))
+    .then(result => {
+      // console.log("views.open:", result.data);
+      res.send("");
+    })
+    .catch(err => {
+      // console.log("views.open call failed:", err);
+      res.sendStatus(500);
+    });
+});
 
-    const authorSlackId = user.id;
-    const recipientSlackId =
-      slackRequest.view.state.values.recipient_block.recipient.selected_user;
-    const kudosText =
-      slackRequest.view.state.values.kudos_text_block.kudos_text.value;
+expressServer.post("/interaction", async (req, res) => {
+  const slackRequest = JSON.parse(req.body.payload);
 
-    const users = await prisma.users();
-    const author = users.find(user => user.slackId === authorSlackId);
-    const recipient = users.find(user => user.slackId === recipientSlackId);
+  const authorSlackId = slackRequest.user.id;
+  const recipientSlackId = _.get(
+    slackRequest,
+    "view.state.values.recipient_block.recipient.selected_user"
+  );
+  const kudosText = _.get(
+    slackRequest,
+    "view.state.values.kudos_text_block.kudos_text.value"
+  );
 
+  const users = await prisma.users();
+  const author = users.find(user => user.slackId === authorSlackId);
+  const recipient = users.find(user => user.slackId === recipientSlackId);
+
+  if (author && recipient && kudosText) {
     const addedKudos = await prisma.createKudos({
-      title: kudosText,
+      text: kudosText,
       author: {
         connect: { id: author.id }
       },
@@ -187,8 +200,13 @@ server.express
         connect: { id: recipient.id }
       }
     });
-
-    res.status(200).send(`${addedKudos.title} is sent to ${recipient.name}`);
-  });
+    res.send("");
+    axios.post(webhookUrl, {
+      text: `${addedKudos.text} is sent to ${recipient.name}`
+    });
+  } else {
+    res.sendStatus(500);
+  }
+});
 
 server.start(() => console.log("Server is running on http://localhost:4000"));
