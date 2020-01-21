@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 const apiUrl = "https://slack.com/api";
 const axios = require("axios");
 const qs = require("querystring");
+require("dotenv").config();
+const slackAuth = process.env.SLACK_AUTH;
 
 const resolvers = {
   Query: {
@@ -102,12 +104,9 @@ server.express
   .post("/command", async (req, res) => {
     //TODO need to check request token
     const slackRequest = req.body;
-    console.group(slackRequest);
 
     const view = {
-      //TODO token is disabled need to move to env
-      token:
-        "xoxp-864511312258-865826180771-913661876304-39ef75a80036654157d74cea21a81915",
+      token: slackAuth,
       trigger_id: slackRequest.trigger_id,
       view: JSON.stringify({
         type: "modal",
