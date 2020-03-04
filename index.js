@@ -7,6 +7,7 @@ const qs = require("querystring");
 const _ = require("lodash");
 require("dotenv").config();
 const authToken = process.env.AUTH_TOKEN;
+const appToken = process.env.APP_TOKEN;
 const webhookUrl = process.env.WEBHOOK_URL;
 
 const resolvers = {
@@ -109,8 +110,12 @@ const expressServer = server.express.use(
 );
 
 expressServer.post("/command", async (req, res) => {
-  //TODO need to check request token
   const slackRequest = req.body;
+
+  if (slackRequest.token !== appToken) {
+    console.log("Invalid app token");
+    return;
+  }
 
   const view = {
     token: authToken,
@@ -176,6 +181,10 @@ expressServer.post("/command", async (req, res) => {
 expressServer.post("/interaction", async (req, res) => {
   const slackRequest = JSON.parse(req.body.payload);
 
+  if (slackRequest.token !== appToken) {
+    console.log("Invalid app token");
+    return;
+  }
   const authorSlackId = slackRequest.user.id;
   const recipientSlackId = _.get(
     slackRequest,
