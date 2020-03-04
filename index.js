@@ -19,6 +19,9 @@ const resolvers = {
       return context.prisma.kudos({ id: args.kudosId });
     },
     kudoses(root, args, context) {
+      if (!context.authenticatedUser) {
+        throw new Error("Not Authenticated");
+      }
       return context.prisma.kudoses();
     },
     userOwnKudoses(root, args, context) {
@@ -39,6 +42,9 @@ const resolvers = {
       return context.prisma.user({ id: args.id });
     },
     users(root, args, context) {
+      if (!context.authenticatedUser) {
+        throw new Error("Not Authenticated");
+      }
       return context.prisma.users();
     }
   },
@@ -127,11 +133,29 @@ const resolvers = {
   }
 };
 
+const authenticateUser = token => {
+  try {
+    if (token) {
+      return jwt.verify(token, jwtSecret);
+    }
+    return null;
+  } catch (err) {
+    return null;
+  }
+};
+
 const server = new GraphQLServer({
   typeDefs: "./schema.graphql",
   resolvers,
-  context: {
-    prisma
+  context: req => {
+    const tokenWithBearer = req.request.headers.authorization || "";
+    const token = tokenWithBearer.split(" ")[1];
+    const authenticatedUser = authenticateUser(token);
+
+    return {
+      authenticatedUser,
+      prisma
+    };
   }
 });
 const expressServer = server.express.use(
