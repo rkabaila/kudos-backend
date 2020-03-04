@@ -5,10 +5,13 @@ const apiUrl = "https://slack.com/api";
 const axios = require("axios");
 const qs = require("querystring");
 const _ = require("lodash");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const authToken = process.env.AUTH_TOKEN;
 const appToken = process.env.APP_TOKEN;
 const webhookUrl = process.env.WEBHOOK_URL;
+const jwtSecret = process.env.JWT_SECRET;
 
 const resolvers = {
   Query: {
@@ -54,11 +57,37 @@ const resolvers = {
     deleteKudos(root, args, context) {
       return context.prisma.deleteKudos({ id: args.id });
     },
-    addUser(root, args, context) {
-      return context.prisma.createUser({
+    async addUser(root, args, context) {
+      const hashedPassword = await bcrypt.hash(args.password, 10);
+      return await context.prisma.createUser({
         slackId: args.slackId,
-        name: args.name
+        name: args.name,
+        password: hashedPassword
       });
+    },
+    async login(root, args, context) {
+      const user = await context.prisma.user({ name: args.name });
+      if (!user) {
+        throw new Error("Invalid Login");
+      }
+      const passwordMatch = await bcrypt.compare(args.password, user.password);
+      if (!passwordMatch) {
+        throw new Error("Invalid Login");
+      }
+      const token = jwt.sign(
+        {
+          id: user.id,
+          name: user.name
+        },
+        jwtSecret,
+        {
+          expiresIn: "30d"
+        }
+      );
+      return {
+        token,
+        user
+      };
     },
     deleteUser(root, args, context) {
       return context.prisma.deleteUser({ id: args.id });

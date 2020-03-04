@@ -1,7 +1,8 @@
 type User {
   id: ID! @id
   slackId: String!
-  name: String!
+  name: String! @unique
+  password: String!
   writtenKudoses: [Kudos] @relation(name: "WrittenKudoses")
   ownKudoses: [Kudos] @relation(name: "OwnKudoses")
 }
@@ -11,4 +12,10 @@ type Kudos {
   text: String!
   author: User @relation(name: "WrittenKudoses")
   recipient: User @relation(name: "OwnKudoses")
+}
+
+type LoginResponse {
+  id: ID! @id
+  token: String
+  user: User
 }
