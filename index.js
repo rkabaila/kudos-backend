@@ -234,6 +234,29 @@ expressServer.post("/command", async (req, res) => {
 });
 
 expressServer.post("/interaction", async (req, res) => {
+  const ensureUsers = async () => {
+    const users = await prisma.users();
+    let author = users.find((user) => user.slackId === authorSlackId);
+    let recipient = users.find((user) => user.slackId === recipientSlackId);
+    if (!author) {
+      author = await prisma.createUser({
+        slackId: authorSlackId,
+        name: slackRequest.user.name,
+        role: "user",
+        password: "123",
+      });
+    }
+    if (!recipient) {
+      recipient = await prisma.createUser({
+        slackId: recipientSlackId,
+        name: "test",
+        role: "user",
+        password: "123",
+      });
+    }
+    return [author, recipient];
+  };
+
   const slackRequest = JSON.parse(req.body.payload);
 
   if (slackRequest.token !== appToken) {
@@ -250,9 +273,7 @@ expressServer.post("/interaction", async (req, res) => {
     "view.state.values.kudos_text_block.kudos_text.value"
   );
 
-  const users = await prisma.users();
-  const author = users.find((user) => user.slackId === authorSlackId);
-  const recipient = users.find((user) => user.slackId === recipientSlackId);
+  const [author, recipient] = await ensureUsers();
 
   if (author && recipient && kudosText) {
     const addedKudos = await prisma.createKudos({
@@ -266,7 +287,9 @@ expressServer.post("/interaction", async (req, res) => {
     });
     res.send("");
     axios.post(webhookUrl, {
-      text: `${addedKudos.text} is sent to ${recipient.name}`,
+      text: `${addedKudos.text} is sent to ${
+        recipient.name
+      }. To view kudoses login on http://localhost:3000`,
     });
   } else {
     res.sendStatus(500);
