@@ -72,6 +72,7 @@ const resolvers = {
         password: hashedPassword,
       });
     },
+    //TODO catch invalid login error
     async login(root, args, context) {
       const user = await context.prisma.user({ name: args.name });
       if (!user) {
@@ -220,7 +221,7 @@ expressServer.post("/command", async (req, res) => {
       ],
     }),
   };
-
+  //TODO node fetch
   axios
     .post(`${apiUrl}/views.open`, qs.stringify(view))
     .then((result) => {
@@ -249,13 +250,16 @@ expressServer.post("/interaction", async (req, res) => {
     if (!recipient) {
       recipient = await prisma.createUser({
         slackId: recipientSlackId,
-        name: "test",
+        name: "test", //not required
         role: "user",
-        password: "123",
+        password: "123", // not required
       });
     }
     return [author, recipient];
   };
+  //TODO create user using
+
+  //TODO map users using google account id
 
   const slackRequest = JSON.parse(req.body.payload);
 
