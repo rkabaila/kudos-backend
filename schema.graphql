@@ -10,11 +10,13 @@ type Query {
 type Mutation {
   addUser(
     name: String!
+    email: String!
     slackId: String!
     role: String!
     password: String!
   ): User
   login(name: String!, password: String!): LoginResponse!
+  googleLogin(token: String!): LoginResponse!
   deleteUser(id: ID!): User
   addKudos(text: String!, authorId: ID, recipientId: ID): Kudos
   deleteKudos(id: ID!): Kudos
@@ -23,6 +25,7 @@ type Mutation {
 type User {
   id: ID!
   slackId: String!
+  email: String!
   name: String!
   role: String!
   password: String!

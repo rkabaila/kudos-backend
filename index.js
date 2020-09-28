@@ -65,8 +65,10 @@ const resolvers = {
     },
     async addUser(root, args, context) {
       const hashedPassword = await bcrypt.hash(args.password, 10);
+
       return await context.prisma.createUser({
         slackId: args.slackId,
+        email: args.email,
         name: args.name,
         role: args.role,
         password: hashedPassword,
@@ -93,6 +95,39 @@ const resolvers = {
           expiresIn: "30d",
         }
       );
+      return {
+        token,
+        user,
+      };
+    },
+    async googleLogin(root, args, context) {
+      const googleToken = args.token;
+      //TODO for prod use Google API Client Library
+      //https://developers.google.com/identity/sign-in/web/backend-auth
+      let response;
+      let tokenInfo;
+      try {
+        response = await fetch(
+          `https://oauth2.googleapis.com/tokeninfo?id_token=${googleToken}`
+        );
+        tokenInfo = await response.json();
+      } catch (error) {
+        console.log(error);
+      }
+      const user = await context.prisma.user({ email: tokenInfo.email });
+
+      const token = jwt.sign(
+        {
+          id: user.id,
+          name: user.name,
+          role: user.role,
+        },
+        jwtSecret,
+        {
+          expiresIn: "30d",
+        }
+      );
+
       return {
         token,
         user,
@@ -262,6 +297,13 @@ expressServer.post("/interaction", async (req, res) => {
   //TODO map users using google account id
 
   const slackRequest = JSON.parse(req.body.payload);
+  response = await fetch(
+    `https://slack.com/api/users.info?token=${authToken}&user=${
+      slackRequest.user.id
+    }`
+  );
+  const info = await response.json();
+  console.log(info);
 
   if (slackRequest.token !== appToken) {
     console.log("Invalid app token");
