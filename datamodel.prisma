@@ -1,10 +1,10 @@
 type User {
-  id: ID! @id
+  id: ID! @id 
   slackId: String!
-  email: String!
-  name: String! @unique
+  email: String! @unique
+  name: String @unique
   role: String!
-  password: String!
+  password: String
   writtenKudoses: [Kudos] @relation(name: "WrittenKudoses")
   ownKudoses: [Kudos] @relation(name: "OwnKudoses")
 }

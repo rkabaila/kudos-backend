@@ -25,16 +25,22 @@ const resolvers = {
       return context.prisma.kudoses();
     },
     userOwnKudoses(root, args, context) {
+      if (!context.authenticatedUser) {
+        throw new Error("Not Authenticated");
+      }
       return context.prisma
         .user({
-          id: args.userId,
+          id: context.authenticatedUser.id,
         })
         .ownKudoses();
     },
     userWrittenKudoses(root, args, context) {
+      if (!context.authenticatedUser) {
+        throw new Error("Not Authenticated");
+      }
       return context.prisma
         .user({
-          id: args.userId,
+          id: context.authenticatedUser.id,
         })
         .writtenKudoses();
     },
@@ -192,6 +198,7 @@ const server = new GraphQLServer({
 
     return {
       authenticatedUser,
+      token,
       prisma,
     };
   },
@@ -275,19 +282,27 @@ expressServer.post("/interaction", async (req, res) => {
     let author = users.find((user) => user.slackId === authorSlackId);
     let recipient = users.find((user) => user.slackId === recipientSlackId);
     if (!author) {
+      response = await fetch(
+        `https://slack.com/api/users.info?token=${authToken}&user=${authorSlackId}`
+      );
+      const info = await response.json();
       author = await prisma.createUser({
         slackId: authorSlackId,
-        name: slackRequest.user.name,
         role: "user",
-        password: "123",
+        email: info.user.profile.email,
+        name: info.user.real_name,
       });
     }
     if (!recipient) {
+      response = await fetch(
+        `https://slack.com/api/users.info?token=${authToken}&user=${recipientSlackId}`
+      );
+      const info = await response.json();
       recipient = await prisma.createUser({
         slackId: recipientSlackId,
-        name: "test", //not required
         role: "user",
-        password: "123", // not required
+        email: info.user.profile.email,
+        name: info.user.real_name,
       });
     }
     return [author, recipient];
@@ -297,13 +312,6 @@ expressServer.post("/interaction", async (req, res) => {
   //TODO map users using google account id
 
   const slackRequest = JSON.parse(req.body.payload);
-  response = await fetch(
-    `https://slack.com/api/users.info?token=${authToken}&user=${
-      slackRequest.user.id
-    }`
-  );
-  const info = await response.json();
-  console.log(info);
 
   if (slackRequest.token !== appToken) {
     console.log("Invalid app token");

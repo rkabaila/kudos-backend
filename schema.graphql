@@ -1,19 +1,19 @@
 type Query {
   kudosById(kudosId: ID!): Kudos
   kudoses: [Kudos]
-  userOwnKudoses(userId: ID!): [Kudos]
-  userWrittenKudoses(userId: ID!): [Kudos]
+  userOwnKudoses: [Kudos]
+  userWrittenKudoses: [Kudos]
   users: [User]
   userById(id: ID!): User
 }
 
 type Mutation {
   addUser(
-    name: String!
+    name: String
     email: String!
     slackId: String!
     role: String!
-    password: String!
+    password: String
   ): User
   login(name: String!, password: String!): LoginResponse!
   googleLogin(token: String!): LoginResponse!
@@ -26,9 +26,9 @@ type User {
   id: ID!
   slackId: String!
   email: String!
-  name: String!
+  name: String
   role: String!
-  password: String!
+  password: String
   writtenKudoses: [Kudos]
   ownKudoses: [Kudos]
 }
