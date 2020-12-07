@@ -80,31 +80,41 @@ const resolvers = {
         password: hashedPassword,
       });
     },
-    //TODO catch invalid login error
+
     async login(root, args, context) {
-      const user = await context.prisma.user({ name: args.name });
-      if (!user) {
-        throw new Error("Invalid Login");
-      }
-      const passwordMatch = await bcrypt.compare(args.password, user.password);
-      if (!passwordMatch) {
-        throw new Error("Invalid Login");
-      }
-      const token = jwt.sign(
-        {
-          id: user.id,
-          name: user.name,
-          role: user.role,
-        },
-        jwtSecret,
-        {
-          expiresIn: "30d",
+      try {
+        const user = await context.prisma.user({ name: args.name });
+        if (!user || !user.password) {
+          throw new Error("Invalid Login");
         }
-      );
-      return {
-        token,
-        user,
-      };
+        const passwordMatch = await bcrypt.compare(
+          args.password,
+          user.password
+        );
+        if (!passwordMatch) {
+          throw new Error("Invalid Login");
+        }
+        const token = jwt.sign(
+          {
+            id: user.id,
+            name: user.name,
+            role: user.role,
+          },
+          jwtSecret,
+          {
+            expiresIn: "30d",
+          }
+        );
+        return {
+          token,
+          user,
+        };
+      } catch (error) {
+        return {
+          token: undefined,
+          user: undefined,
+        };
+      }
     },
     async googleLogin(root, args, context) {
       const googleToken = args.token;
