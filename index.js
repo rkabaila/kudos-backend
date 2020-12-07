@@ -116,6 +116,7 @@ const resolvers = {
         };
       }
     },
+
     async googleLogin(root, args, context) {
       const googleToken = args.token;
       //TODO for prod use Google API Client Library
@@ -129,6 +130,16 @@ const resolvers = {
         tokenInfo = await response.json();
       } catch (error) {
         console.log(error);
+        return {
+          token: undefined,
+          user: undefined,
+        };
+      }
+      if (tokenInfo.hd !== "telesoftas.com") {
+        return {
+          token: undefined,
+          user: undefined,
+        };
       }
       const user = await context.prisma.user({ email: tokenInfo.email });
 
@@ -149,6 +160,7 @@ const resolvers = {
         user,
       };
     },
+
     deleteUser(root, args, context) {
       return context.prisma.deleteUser({ id: args.id });
     },
