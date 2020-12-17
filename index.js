@@ -365,7 +365,7 @@ expressServer.post("/interaction", async (req, res) => {
     axios.post(webhookUrl, {
       text: `${addedKudos.text} is sent to ${
         recipient.name
-      }. To view kudoses login on http://localhost:3000`,
+      }. To view kudoses login on http://localhost:3000/login`,
     });
   } else {
     res.sendStatus(500);
