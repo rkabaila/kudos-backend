@@ -1,4 +1,4 @@
-const { prisma } = require("./generated/prisma-client");
+const { prisma } = require("../generated/prisma-client");
 const { GraphQLServer } = require("graphql-yoga");
 const bodyParser = require("body-parser");
 const apiUrl = "https://slack.com/api";
@@ -12,6 +12,7 @@ const authToken = process.env.AUTH_TOKEN;
 const appToken = process.env.APP_TOKEN;
 const webhookUrl = process.env.WEBHOOK_URL;
 const jwtSecret = process.env.JWT_SECRET;
+const getModalBlocks = require("./modal-blocks");
 
 const resolvers = {
   Query: {
@@ -236,7 +237,7 @@ expressServer.post("/command", async (req, res) => {
     console.log("Invalid app token");
     return;
   }
-
+  const modalBlocks = getModalBlocks(slackRequest.text);
   const view = {
     token: authToken,
     trigger_id: slackRequest.trigger_id,
@@ -251,38 +252,7 @@ expressServer.post("/command", async (req, res) => {
         type: "plain_text",
         text: "Send kudos",
       },
-      blocks: [
-        {
-          block_id: "kudos_text_block",
-          type: "input",
-          label: {
-            type: "plain_text",
-            text: "Kudos text:",
-          },
-          element: {
-            action_id: "kudos_text",
-            type: "plain_text_input",
-            initial_value: slackRequest.text,
-            multiline: true,
-          },
-        },
-        {
-          block_id: "recipient_block",
-          type: "input",
-          label: {
-            type: "plain_text",
-            text: "Send to user:",
-          },
-          element: {
-            action_id: "recipient",
-            type: "users_select",
-            placeholder: {
-              type: "plain_text",
-              text: "Select user",
-            },
-          },
-        },
-      ],
+      blocks: modalBlocks,
     }),
   };
   //TODO node fetch
