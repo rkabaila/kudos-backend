@@ -18,7 +18,12 @@ type Mutation {
   login(name: String!, password: String!): LoginResponse!
   googleLogin(token: String!): LoginResponse!
   deleteUser(id: ID!): User
-  addKudos(text: String!, authorId: ID, recipientId: ID): Kudos
+  addKudos(
+    text: String!
+    authorId: ID
+    recipientId: ID
+    category: String
+  ): Kudos
   deleteKudos(id: ID!): Kudos
 }
 
@@ -38,6 +43,7 @@ type Kudos {
   text: String!
   author: User
   recipient: User
+  category: String
 }
 
 type LoginResponse {

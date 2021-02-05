@@ -14,6 +14,7 @@ type Kudos {
   text: String!
   author: User @relation(name: "WrittenKudoses")
   recipient: User @relation(name: "OwnKudoses")
+  category: String
 }
 
 type LoginResponse {

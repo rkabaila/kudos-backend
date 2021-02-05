@@ -65,6 +65,7 @@ const resolvers = {
         recipient: {
           connect: { id: args.recipientId },
         },
+        category: args.category,
       });
     },
     deleteKudos(root, args, context) {
@@ -318,6 +319,9 @@ expressServer.post("/interaction", async (req, res) => {
     slackRequest,
     "view.state.values.kudos_text_block.kudos_text.value"
   );
+  const category =
+    slackRequest.view.state.values.category_block["static_select-action"]
+      .selected_option.value;
 
   const [author, recipient] = await ensureUsers();
 
@@ -330,6 +334,7 @@ expressServer.post("/interaction", async (req, res) => {
       recipient: {
         connect: { id: recipient.id },
       },
+      category,
     });
     res.send("");
     axios.post(webhookUrl, {
