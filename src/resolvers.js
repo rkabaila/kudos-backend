@@ -85,7 +85,6 @@ const resolvers = {
         if (!passwordMatch) {
           throw new Error("Invalid Login");
         }
-        console.log(user);
         const token = jwt.sign(
           {
             id: user.id,
@@ -97,7 +96,7 @@ const resolvers = {
             expiresIn: "30d",
           }
         );
-        console.log("token", token);
+
         return {
           token,
           user,

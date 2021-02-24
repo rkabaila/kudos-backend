@@ -5,6 +5,7 @@ const resolvers = require("./resolvers");
 const authenticateUser = require("./authenticate");
 const kudosRequest = require("./express/kudos");
 const interactionRequest = require("./express/interaction");
+const top5Request = require("./express/top5");
 
 const server = new GraphQLServer({
   typeDefs: "./schema.graphql",
@@ -28,5 +29,6 @@ const expressServer = server.express.use(
 
 expressServer.post("/kudos", kudosRequest);
 expressServer.post("/interaction", interactionRequest);
+expressServer.post("/top5", top5Request);
 
 module.exports = server;
